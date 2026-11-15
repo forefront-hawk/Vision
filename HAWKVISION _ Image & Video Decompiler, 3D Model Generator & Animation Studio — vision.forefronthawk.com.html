@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="ui-sophisticated" data-device="desktop">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HAWKVISION | Image &amp; Video Decompiler, 3D Model Generator &amp; Animation Studio — vision.forefronthawk.com</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07090F;
+    --panel: #111624;
+    --panel2: #171E31;
+    --line: #28334A;
+    --border: #C5A059;
+    --accent: #D4AF37;
+    --accent2: #00F5D4;
+    --emerald: #39FF88;
+    --purple: #A855F7;
+    --danger: #F87171;
+    --text: #F8FAFC;
+    --mute: #94A3B8;
+    --font: "Inter", system-ui, -apple-system, sans-serif;
+    --mono: "JetBrains Mono", monospace;
+    --display: "Orbitron", sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    transition: max-width 0.22s ease, margin 0.22s ease;
+  }
+
+  /* Responsive Device Layout Modes (Desktop / Mobile / Fold / Tablet) */
+  html[data-device="mobile"] body {
+    max-width: 430px;
+    margin: 0 auto;
+    border-left: 2px solid var(--border);
+    border-right: 2px solid var(--border);
+  }
+  html[data-device="mobile"] .hv-studio-grid,
+  html[data-device="mobile"] .hv-layers-grid,
+  html[data-device="mobile"] .hv-export-grid {
+    grid-template-columns: 1fr !important;
+  }
+  html[data-device="tablet"] body {
+    max-width: 1024px;
+    margin: 0 auto;
+    border-left: 2px solid var(--border);
+    border-right: 2px solid var(--border);
+  }
+  html[data-device="fold"] .hv-studio-grid {
+    grid-template-columns: 1fr 1fr !important;
+    column-gap: 20px !important;
+    background-image: linear-gradient(90deg, transparent calc(50% - 1px), rgba(212, 175, 55, 0.45) 50%, transparent calc(50% + 1px));
+  }
+
+  /* Top Header */
+  .hv-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 14px;
+    background: linear-gradient(90deg, var(--panel), var(--panel2) 55%, var(--panel));
+    border-bottom: 1.5px solid var(--border);
+    flex-wrap: wrap;
+    z-index: 30;
+  }
+  .hv-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font: 900 15px var(--display);
+    color: var(--accent);
+    letter-spacing: 0.08em;
+  }
+  .hv-brand span { color: var(--accent2); }
+
+  button, select, input[type="text"] {
+    font: 700 11px var(--mono);
+    color: var(--text);
+    background: var(--panel2);
+    border: 1px solid rgba(197, 160, 89, 0.45);
+    border-radius: 7px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: filter 0.12s, border-color 0.12s, transform 0.06s;
+  }
+  button:hover, select:hover {
+    filter: brightness(1.14);
+    border-color: var(--accent2);
+  }
+  button:active { transform: scale(0.97); }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--accent), #FACC15);
+    color: #050B14;
+    border-color: #FFF;
+    font-weight: 900;
+  }
+  .btn-cyan {
+    background: linear-gradient(135deg, #00F5D4, #38BDF8);
+    color: #04121C;
+    border-color: #FFF;
+    font-weight: 900;
+  }
+  .btn-emerald {
+    background: linear-gradient(135deg, #10B981, #39FF88);
+    color: #04121C;
+    border-color: #FFF;
+    font-weight: 900;
+  }
+  .btn-purple {
+    background: linear-gradient(135deg, #A855F7, #EC4899);
+    color: #FFF;
+    border-color: #FDE047;
+    font-weight: 800;
+  }
+
+  /* Subbar: URL / HTML Importer + Telemetry Badges */
+  .hv-subbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(8, 12, 22, 0.96);
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .hv-url-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 240px;
+  }
+  .hv-badge {
+    font: 800 10.5px var(--mono);
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: rgba(0, 245, 212, 0.12);
+    border: 1px solid rgba(0, 245, 212, 0.45);
+    color: var(--accent2);
+  }
+
+  /* Navigation Tabs */
+  .hv-tabs-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .hv-tab {
+    padding: 6px 12px;
+    border-radius: 7px;
+    font: 800 11.5px var(--mono);
+    background: transparent;
+    color: var(--mute);
+    border: 1px solid transparent;
+  }
+  .hv-tab[aria-selected="true"] {
+    background: rgba(212, 175, 55, 0.18);
+    color: var(--accent);
+    border-color: var(--border);
+  }
+
+  /* Main Views */
+  .hv-main {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    display: flex;
+    overflow: hidden;
+  }
+  .hv-view {
+    display: none;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    min-height: 0;
+    overflow: auto;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .hv-view.active {
+    display: flex;
+  }
+
+  /* Main Studio Split Grid */
+  .hv-studio-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+  .hv-card {
+    background: var(--panel);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    min-height: 280px;
+    overflow: hidden;
+  }
+  .hv-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--panel2);
+    border-bottom: 1px solid var(--line);
+    font: 800 12px var(--display);
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    flex-wrap: wrap;
+  }
+  .hv-card-body {
+    flex: 1;
+    overflow: auto;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  /* Canvases */
+  .canvas-frame {
+    position: relative;
+    background: radial-gradient(circle at 50% 35%, #162038, #05070C);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #hvSourceCanvas {
+    max-width: 100%;
+    height: 220px;
+    cursor: crosshair;
+    display: block;
+  }
+  #hvThreeCanvas {
+    width: 100%;
+    height: 310px;
+    cursor: grab;
+    display: block;
+  }
+  #hvThreeCanvas:active {
+    cursor: grabbing;
+  }
+
+  /* Control Rows & Sliders */
+  .ctrl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+    gap: 8px;
+  }
+  .ctrl-box {
+    background: rgba(0, 0, 0, 0.32);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .ctrl-box label {
+    display: flex;
+    justify-content: space-between;
+    font: 700 10.5px var(--mono);
+    color: var(--mute);
+  }
+  .ctrl-box input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent2);
+    cursor: pointer;
+  }
+
+  /* Swatch Bar */
+  .swatch-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .color-swatch {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1.5px solid #FFF;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .color-swatch:hover {
+    transform: scale(1.12);
+  }
+
+  /* Decompiled 4-Layer Grid */
+  .hv-layers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  .layer-canvas {
+    width: 100%;
+    height: 175px;
+    background: #05070C;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    display: block;
+  }
+
+  /* Export Grid */
+  .hv-export-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+  textarea.hv-code-out {
+    width: 100%;
+    flex: 1;
+    min-height: 220px;
+    background: #05070C;
+    color: #A7F3D0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px;
+    font: 500 11.5px/1.5 var(--mono);
+    resize: none;
+    outline: none;
+  }
+</style>
+</head>
+<body>
+
+  <!-- ===================================================================== -->
+  <!-- TOP HEADER: PHONE CAMERA, NATIVE PHOTO APP, UPLOAD & SUITE SYNC       -->
+  <!-- ===================================================================== -->
+  <header class="hv-topbar">
+    <div class="hv-brand">
+      <span>🦅</span> HAWK<span>VISION</span>
+      <small style="font-size:9px;color:var(--mute);font-family:var(--mono)">VISION.FOREFRONTHAWK.COM • 2D/VIDEO ➔ 3D DECOMPILER</small>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <!-- 1. Direct Phone Camera Trigger (capture="environment") -->
+      <button type="button" id="btnPhoneCameraRear" class="btn-cyan" title="Open your phone's native camera app directly to snap &amp; decompile a real-world object into 3D">
+        📸 Phone Camera (Snap to 3D)
+      </button>
+      <input type="file" id="inputPhoneCameraRear" accept="image/*" capture="environment" hidden>
+
+      <!-- 2. Native Phone Photo App / Gallery Picker -->
+      <button type="button" id="btnNativePhotoApp" class="btn-gold" title="Open your phone or device's native Photo Gallery app to upload a photo or video">
+        🖼️ Open Native Photo App
+      </button>
+      <input type="file" id="inputNativePhotoApp" accept="image/*,video/*" hidden>
+
+      <!-- 3. Live WebRTC Viewfinder Modal Toggle -->
+      <button type="button" id="btnLiveWebRtcCam" title="Start live in-browser camera stream and capture frames directly">
+        📹 Live Camera Stream
+      </button>
+
+      <!-- 4. Built-in Procedural Subject Presets -->
+      <label style="font:800 10.5px var(--mono);color:var(--accent);display:inline-flex;align-items:center;gap:4px">
+        <span>Preset:</span>
+        <select id="hvPresetSelect">
+          <option value="mecha_hawk" selected>🦅 Golden Mecha-Hawk Fighter</option>
+          <option value="cyber_car">🏎️ Apex GT Cyber Car</option>
+          <option value="bullet_train">🚅 Shinkansen Bullet Train</option>
+          <option value="monster_truck">🛻 Mega Monster Truck 4x4</option>
+          <option value="canyon_terrain">🏔️ Canyon Elevation Topo Map</option>
+        </select>
+      </label>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <button type="button" id="btnSendToHawkSuite" class="btn-emerald" title="Broadcast this 3D Model &amp; Animation directly to HawkAccipiter, HawkEyas, HawkTalon &amp; HawkTails">
+        🚀 Send 3D Asset to HawkSuite
+      </button>
+      <button type="button" id="btnQuickExportHawk3d" class="btn-purple" title="Download native .hawk3d.json package for HawkAccipiter, HawkEyas &amp; HawkX">
+        💾 Export .HAWK3D
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- SUB-BAR: IMAGE / VIDEO / HTML LINK LOADER + DEVICE & THEME SWITCHER   -->
+  <!-- ===================================================================== -->
+  <section class="hv-subbar">
+    <div class="hv-url-bar">
+      <span style="font:800 10.5px var(--mono);color:var(--accent2)">🔗 Image / Video / HTML Link:</span>
+      <input type="text" id="hvLinkOrHtmlInput" style="flex:1;min-width:190px" placeholder="Paste https:// image/video URL, data:image URI, or <img src='...'> HTML snippet...">
+      <button type="button" id="btnLoadLinkOrHtml" class="btn-cyan">⚡ Decompile Link / HTML</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span class="hv-badge" id="hvStatusBadge">✅ 3D MESH READY (1,024 VERTICES)</span>
+      <label style="font:700 10.5px var(--mono);color:var(--mute)">
+        Layout:
+        <select id="hvDeviceSelect">
+          <option value="desktop" selected>🖥️ Desktop</option>
+          <option value="mobile">📱 Mobile</option>
+          <option value="fold">📖 Fold (Dual-Screen)</option>
+          <option value="tablet">📟 Tablet</option>
+        </select>
+      </label>
+      <label style="font:700 10.5px var(--mono);color:var(--mute)">
+        Theme:
+        <select id="hvThemeSelect">
+          <option value="ui-sophisticated" selected>✨ Sophisticated Gold</option>
+          <option value="cyberpunk">⚡ Cyberpunk Neon</option>
+          <option value="matrix">💻 Matrix Green CRT</option>
+          <option value="hawk-cyan">🦅 HawkX Tactical Cyan</option>
+          <option value="daylight">🌤️ Studio Daylight</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- WORKSPACE TABS                                                        -->
+  <!-- ===================================================================== -->
+  <nav class="hv-tabs-bar" aria-label="HawkVision Workspace Views">
+    <div style="display:flex;gap:5px;flex-wrap:wrap" role="tablist">
+      <button type="button" class="hv-tab" role="tab" data-view="studio" aria-selected="true">
+        🧊 1. 2D Editor + Live 3D Model &amp; Animation Studio
+      </button>
+      <button type="button" class="hv-tab" role="tab" data-view="layers" aria-selected="false">
+        🔬 2. Decompiled Layers (Albedo · Depth · Sobel Edges · Normals)
+      </button>
+      <button type="button" class="hv-tab" role="tab" data-view="video" aria-selected="false">
+        🎞️ 3. Video Frame Decompiler &amp; Motion Keyframe Rig
+      </button>
+      <button type="button" class="hv-tab" role="tab" data-view="export" aria-selected="false">
+        📦 4. Native HawkSuite Exporter (HawkAccipiter · HawkEyas · OBJ · HTML)
+      </button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font:700 10.5px var(--mono);color:var(--mute)">Extracted Palette:</span>
+      <div class="swatch-bar" id="hvPaletteSwatches"></div>
+    </div>
+  </nav>
+
+  <!-- ===================================================================== -->
+  <!-- MAIN WORKSPACE VIEWS                                                  -->
+  <!-- ===================================================================== -->
+  <main class="hv-main">
+
+    <!-- =================================================================== -->
+    <!-- VIEW 1: 2D DECOMPILER EDITOR + LIVE 3D MODEL & ANIMATION STUDIO     -->
+    <!-- =================================================================== -->
+    <section class="hv-view active" id="view-studio" role="tabpanel">
+      <div class="hv-studio-grid">
+        <!-- Left Column: Source Image / Camera / Paint & Depth Sculpt Editor -->
+        <div class="hv-card">
+          <div class="hv-card-head">
+            <span>🎨 SOURCE IMAGE / VIDEO FRAME &amp; DEPTH SCULPT EDITOR</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              <button type="button" id="btnClearPaintEdits" style="padding:3px 8px;font-size:10px">↺ Reset Edits</button>
+              <button type="button" id="btnAutoRemoveBg" class="btn-cyan" style="padding:3px 8px;font-size:10px">🪄 Auto-Isolate Subject</button>
+            </div>
+          </div>
+          <div class="hv-card-body">
+            <div class="canvas-frame">
+              <canvas id="hvSourceCanvas" width="320" height="220"></canvas>
+              <video id="hvLiveVideoEl" autoplay playsinline muted hidden style="max-width:100%;height:220px"></video>
+            </div>
+
+            <!-- Live Camera Snapshot Bar (shown when WebRTC camera is active) -->
+            <div id="hvWebRtcControls" style="display:none;gap:6px;justify-content:center;padding:4px">
+              <button type="button" id="btnSnapWebRtcFrame" class="btn-emerald">📸 Capture Frame to 3D</button>
+              <button type="button" id="btnStopWebRtcCam">⏹️ Close Camera</button>
+            </div>
+
+            <!-- 2D Brush & Decompilation Filters -->
+            <div class="ctrl-grid">
+              <div class="ctrl-box">
+                <label><span>Edit Brush Mode</span><span id="lblBrushMode">Paint Color</span></label>
+                <select id="hvBrushModeSelect">
+                  <option value="paint" selected>🖌️ Paint Color + Depth</option>
+                  <option value="raise">⬆️ Sculpt Raise 3D Relief</option>
+                  <option value="carve">⬇️ Sculpt Carve Cavity</option>
+                  <option value="erase">🧹 Erase to Background</option>
+                </select>
+              </div>
+              <div class="ctrl-box">
+                <label><span>Brush Color &amp; Size</span><span id="lblBrushSize">12px</span></label>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <input type="color" id="hvBrushColor" value="#00F5D4" style="width:36px;height:24px;border:0;background:none">
+                  <input type="range" id="hvBrushSize" min="3" max="36" value="12">
+                </div>
+              </div>
+              <div class="ctrl-box">
+                <label><span>BG Chroma Cutout</span><span id="lblBgThreshold">18%</span></label>
+                <input type="range" id="hvBgThreshold" min="0" max="75" value="18">
+              </div>
+              <div class="ctrl-box">
+                <label><span>Brightness / Contrast</span><span id="lblContrast">100%</span></label>
+                <input type="range" id="hvContrast" min="50" max="180" value="100">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Live 3D Model Reconstruction & Animation Stage -->
+        <div class="hv-card">
+          <div class="hv-card-head">
+            <span>🧊 LIVE 3D MODEL &amp; ANIMATION VIEWPORT (DRAG TO ORBIT)</span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <select id="hv3dModeSelect" style="padding:3px 8px;font-size:10.5px">
+                <option value="voxel" selected>🧱 3D Voxel Extrusion (HawkEyas / Accipiter)</option>
+                <option value="relief">🏔️ 3D Heightmap Relief Surface</option>
+                <option value="lathe">🔄 3D 360° Lathe Revolution</option>
+                <option value="wireframe">🕸️ 3D Cyber Wireframe Hull</option>
+              </select>
+              <button type="button" id="btnResetCamera3d" style="padding:3px 8px;font-size:10px">🎯 Center 3D</button>
+            </div>
+          </div>
+          <div class="hv-card-body">
+            <div class="canvas-frame">
+              <canvas id="hvThreeCanvas" width="620" height="310"></canvas>
+            </div>
+
+            <div class="ctrl-grid">
+              <div class="ctrl-box">
+                <label><span>3D Animation Clip</span><span id="lblAnimClip">Flight Bank</span></label>
+                <select id="hvAnimClipSelect">
+                  <option value="turntable">🔄 360° Turntable Showcase</option>
+                  <option value="flight" selected>✈️ Flight Bank &amp; Pitch (HawkX)</option>
+                  <option value="bounce">🛞 Drive / Walk Bounce (HawkEyas)</option>
+                  <option value="hover">🛸 Zero-G Hover Breathe</option>
+                  <option value="explode">💥 Decompilation Explode</option>
+                  <option value="static">⏸️ Paused / Manual Orbit</option>
+                </select>
+              </div>
+              <div class="ctrl-box">
+                <label><span>Depth Extrusion (Z)</span><span id="lblDepthScale">1.4×</span></label>
+                <input type="range" id="hvDepthScale" min="20" max="300" value="140">
+              </div>
+              <div class="ctrl-box">
+                <label><span>Mesh Grid Density</span><span id="lblGridRes">28×28</span></label>
+                <input type="range" id="hvGridRes" min="14" max="44" step="2" value="28">
+              </div>
+              <div class="ctrl-box">
+                <label><span>Animation Speed</span><span id="lblAnimSpeed">1.0×</span></label>
+                <input type="range" id="hvAnimSpeed" min="0" max="250" value="100">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- VIEW 2: DECOMPILED LAYERS (ALBEDO, DEPTH, SOBEL EDGES, NORMALS)     -->
+    <!-- =================================================================== -->
+    <section class="hv-view" id="view-layers" role="tabpanel">
+      <div class="hv-layers-grid">
+        <div class="hv-card" style="min-height:230px">
+          <div class="hv-card-head"><span>1. 🎨 ISOLATED ALBEDO LAYER (RGBA)</span></div>
+          <div class="hv-card-body">
+            <canvas class="layer-canvas" id="canvasLayerAlbedo" width="280" height="175"></canvas>
+            <small style="color:var(--mute);font-size:11px">Chroma-keyed diffuse color map feeding 3D vertex/voxel colors.</small>
+          </div>
+        </div>
+
+        <div class="hv-card" style="min-height:230px">
+          <div class="hv-card-head"><span>2. 🏔️ Z-DEPTH &amp; ELEVATION MAP</span></div>
+          <div class="hv-card-body">
+            <canvas class="layer-canvas" id="canvasLayerDepth" width="280" height="175"></canvas>
+            <small style="color:var(--mute);font-size:11px">Luminance + edge-weighted heightfield driving Z-axis 3D extrusion.</small>
+          </div>
+        </div>
+
+        <div class="hv-card" style="min-height:230px">
+          <div class="hv-card-head"><span>3. ⚡ SOBEL CONTOUR &amp; EDGE VECTORS</span></div>
+          <div class="hv-card-body">
+            <canvas class="layer-canvas" id="canvasLayerEdges" width="280" height="175"></canvas>
+            <small style="color:var(--mute);font-size:11px">High-frequency structural boundaries used for feature crease sharpening.</small>
+          </div>
+        </div>
+
+        <div class="hv-card" style="min-height:230px">
+          <div class="hv-card-head"><span>4. 🧭 TANGENT-SPACE NORMAL MAP (XYZ)</span></div>
+          <div class="hv-card-body">
+            <canvas class="layer-canvas" id="canvasLayerNormals" width="280" height="175"></canvas>
+            <small style="color:var(--mute);font-size:11px">Surface normal vectors (R=Nx, G=Ny, B=Nz) for real-time 3D specular shading.</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- VIEW 3: VIDEO FRAME DECOMPILER & MOTION KEYFRAME TIMELINE           -->
+    <!-- =================================================================== -->
+    <section class="hv-view" id="view-video" role="tabpanel">
+      <div class="hv-card">
+        <div class="hv-card-head">
+          <span>🎞️ VIDEO DECOMPILER &amp; 4-KEYFRAME 3D ANIMATION SEQUENCER</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button type="button" id="btnUploadVideoFile" class="btn-cyan" style="padding:4px 9px;font-size:10px">📂 Load Video File (.MP4 / .WEBM)</button>
+            <input type="file" id="inputVideoFile" accept="video/*" hidden>
+            <button type="button" id="btnCaptureKeyframeSlot" class="btn-emerald" style="padding:4px 9px;font-size:10px">➕ Snapshot Current 3D Pose to Keyframe</button>
+          </div>
+        </div>
+        <div class="hv-card-body">
+          <p style="font-size:12px;color:#CBD5E1">
+            Scrub any uploaded video (or procedural motion sequence) to extract frames into 3D keyframes, and export the resulting multi-frame animation directly to <b>HawkAccipiter</b> and <b>HawkEyas</b>:
+          </p>
+          <div class="ctrl-box">
+            <label><span>Video / Motion Timeline Scrubber</span><span id="lblTimelinePct">Frame 1 / 4 (0%)</span></label>
+            <input type="range" id="hvVideoScrubber" min="0" max="100" value="0">
+          </div>
+          <div class="hv-layers-grid" id="hvKeyframeSlotsGrid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- VIEW 4: NATIVE HAWKSUITE EXPORTER (HAWKACCIPITER, HAWKEYAS, OBJ)    -->
+    <!-- =================================================================== -->
+    <section class="hv-view" id="view-export" role="tabpanel">
+      <div class="hv-export-grid">
+        <div class="hv-card">
+          <div class="hv-card-head">
+            <span>📦 EXPORT TO HAWK SUITE TOOLS &amp; 3D FORMATS</span>
+          </div>
+          <div class="hv-card-body">
+            <label style="font:700 11px var(--mono);color:var(--accent)">
+              Asset Name (Used in HawkAccipiter, HawkEyas &amp; HawkTails):
+              <input type="text" id="hvAssetNameInput" value="HawkVision_Decompiled_Asset" style="width:100%;margin-top:4px">
+            </label>
+
+            <label style="font:700 11px var(--mono);color:var(--accent2)">
+              Target Export Format:
+              <select id="hvExportFormatSelect" style="width:100%;margin-top:4px">
+                <option value="hawksuite_json" selected>🦅 Native HawkSuite 3D Package (.hawk3d.json — HawkAccipiter / HawkEyas / HawkX)</option>
+                <option value="standalone_html">🌐 Standalone Playable 3D Model &amp; Animation Web App (.html — HawkTalon Ready)</option>
+                <option value="wavefront_obj">📐 Wavefront 3D Geometry Mesh (.obj — Universal 3D Vertices &amp; Faces)</option>
+                <option value="js_module">📜 Portable JavaScript 3D Renderer Function (.js)</option>
+              </select>
+            </label>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
+              <button type="button" id="btnBroadcastToSuiteNow" class="btn-emerald">
+                📡 Sync to HawkSuite Bus Now
+              </button>
+              <button type="button" id="btnDownloadExportFile" class="btn-gold">
+                💾 Download Exported File
+              </button>
+              <button type="button" id="btnCopyExportCode" class="btn-cyan">
+                📋 Copy Code to Clipboard
+              </button>
+              <button type="button" id="btnRefreshExportPreview">
+                🔄 Refresh Serialized Output
+              </button>
+            </div>
+
+            <div id="hvExportBusStatus" style="margin-top:auto;padding:9px;background:#05070C;border:1px solid var(--border);border-radius:8px;font:600 11px/1.45 var(--mono);color:var(--emerald)">
+              🟢 Connected to <code>hawk_creator_ecosystem_v1</code> bus — exporting syncs directly with <b>HawkAccipiter</b> (`accipiter.forefronthawk.com`), <b>HawkEyas</b> (`eyas.forefronthawk.com`), <b>HawkTails</b> (`tails.forefronthawk.com`), and <b>HawkTalon</b> (`talon.forefronthawk.com`).
+            </div>
+          </div>
+        </div>
+
+        <div class="hv-card">
+          <div class="hv-card-head">
+            <span>📄 LIVE SERIALIZED 3D MODEL &amp; ANIMATION CODE PREVIEW</span>
+            <span id="lblExportByteSize" style="font:700 10.5px var(--mono);color:var(--accent2)">0 KB</span>
+          </div>
+          <div class="hv-card-body">
+            <textarea class="hv-code-out" id="hvExportCodeTextarea" readonly aria-label="Exported 3D Asset Code"></textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+<script>
+(function(){
+  const S_OPEN = "<" + "script>";
+  const S_CLOSE = "</" + "script>";
+  const $ = id => document.getElementById(id);
+
+  // =========================================================================
+  // 1. STATE & DOM REFERENCES
+  // =========================================================================
+  const srcCanvas = $("hvSourceCanvas");
+  const srcCtx = srcCanvas.getContext("2d", { willReadFrequently: true });
+  const threeCanvas = $("hvThreeCanvas");
+  const threeCtx = threeCanvas.getContext("2d");
+
+  const layerAlbedo = $("canvasLayerAlbedo").getContext("2d");
+  const layerDepth = $("canvasLayerDepth").getContext("2d");
+  const layerEdges = $("canvasLayerEdges").getContext("2d");
+  const layerNormals = $("canvasLayerNormals").getContext("2d");
+
+  const videoEl = $("hvLiveVideoEl");
+  const statusBadge = $("hvStatusBadge");
+
+  // Offscreen buffer holding the clean base image before threshold/contrast adjustments
+  const rawBuffer = document.createElement("canvas");
+  rawBuffer.width = 320;
+  rawBuffer.height = 220;
+  const rawCtx = rawBuffer.getContext("2d", { willReadFrequently: true });
+
+  // Custom depth sculpt delta map (320x220 floats in [-1, 1])
+  const depthSculptDelta = new Float32Array(320 * 220);
+
+  let meshVertices = [];
+  let meshVoxels = [];
+  let extractedPalette = ["#D4AF37", "#00F5D4", "#38BDF8", "#F97316", "#10B981", "#A855F7"];
+  let keyframes = [];
+
+  // 3D Orbit Camera State
+  let camYaw = 0.55;
+  let camPitch = 0.38;
+  let camZoom = 1.05;
+  let isDragging3d = false;
+  let lastMouseX = 0;
+  let lastMouseY = 0;
+  let animTime = 0;
+  let activeWebRtcStream = null;
+
+  // =========================================================================
+  // 2. PROCEDURAL 2D SUBJECT GENERATOR (SO PRESETS WORK IMMEDIATELY)
+  // =========================================================================
+  function drawPresetSubjectToRawBuffer(presetKey) {
+    depthSculptDelta.fill(0);
+    const w = rawBuffer.width, h = rawBuffer.height;
+    rawCtx.fillStyle = "#060911";
+    rawCtx.fillRect(0, 0, w, h);
+
+    rawCtx.save();
+    rawCtx.translate(w / 2, h / 2);
+
+    if (presetKey === "mecha_hawk") {
+      // Swept-wing Golden Mecha-Hawk Fighter
+      const grad = rawCtx.createLinearGradient(0, -85, 0, 85);
+      grad.addColorStop(0, "#FDE047");
+      grad.addColorStop(0.5, "#D4AF37");
+      grad.addColorStop(1, "#00F5D4");
+      rawCtx.fillStyle = grad;
+      rawCtx.beginPath();
+      rawCtx.moveTo(0, -88);
+      rawCtx.lineTo(28, -28);
+      rawCtx.lineTo(125, 18);
+      rawCtx.lineTo(105, 42);
+      rawCtx.lineTo(26, 28);
+      rawCtx.lineTo(38, 78);
+      rawCtx.lineTo(0, 62);
+      rawCtx.lineTo(-38, 78);
+      rawCtx.lineTo(-26, 28);
+      rawCtx.lineTo(-105, 42);
+      rawCtx.lineTo(-125, 18);
+      rawCtx.lineTo(-28, -28);
+      rawCtx.closePath();
+      rawCtx.fill();
+
+      // Cockpit canopy & twin thruster cores
+      rawCtx.fillStyle = "#00F5D4";
+      rawCtx.beginPath();
+      rawCtx.ellipse(0, -24, 12, 30, 0, 0, Math.PI * 2);
+      rawCtx.fill();
+      rawCtx.fillStyle = "#FFFFFF";
+      rawCtx.fillRect(-18, 42, 10, 22);
+      rawCtx.fillRect(8, 42, 10, 22);
+      $("hvAssetNameInput").value = "Mecha_Hawk_Interceptor";
+    } else if (presetKey === "cyber_car") {
+      // Apex GT Cyber Car
+      rawCtx.fillStyle = "#00F5D4";
+      rawCtx.beginPath();
+      rawCtx.roundRect(-115, -10, 230, 52, 14);
+      rawCtx.fill();
+      rawCtx.fillStyle = "#38BDF8";
+      rawCtx.beginPath();
+      rawCtx.moveTo(-65, -10);
+      rawCtx.lineTo(-32, -52);
+      rawCtx.lineTo(48, -52);
+      rawCtx.lineTo(82, -10);
+      rawCtx.closePath();
+      rawCtx.fill();
+      rawCtx.fillStyle = "#FACC15";
+      rawCtx.beginPath();
+      rawCtx.arc(-68, 42, 24, 0, Math.PI * 2);
+      rawCtx.arc(68, 42, 24, 0, Math.PI * 2);
+      rawCtx.fill();
+      $("hvAssetNameInput").value = "Apex_GT_Cyber_Car";
+    } else if (presetKey === "bullet_train") {
+      // Shinkansen Bullet Train
+      const g = rawCtx.createLinearGradient(-130, -40, 130, 40);
+      g.addColorStop(0, "#38BDF8");
+      g.addColorStop(0.5, "#F8FAFC");
+      g.addColorStop(1, "#D4AF37");
+      rawCtx.fillStyle = g;
+      rawCtx.beginPath();
+      rawCtx.moveTo(-135, 35);
+      rawCtx.lineTo(-135, -32);
+      rawCtx.lineTo(55, -32);
+      rawCtx.quadraticCurveTo(135, -30, 140, 35);
+      rawCtx.closePath();
+      rawCtx.fill();
+      rawCtx.fillStyle = "#00F5D4";
+      for (let x = -110; x <= 30; x += 34) {
+        rawCtx.fillRect(x, -16, 22, 14);
+      }
+      $("hvAssetNameInput").value = "Shinkansen_Bullet_Train";
+    } else if (presetKey === "monster_truck") {
+      // Mega Monster Truck
+      rawCtx.fillStyle = "#F97316";
+      rawCtx.fillRect(-95, -52, 190, 58);
+      rawCtx.fillStyle = "#FDE047";
+      rawCtx.fillRect(-55, -82, 95, 34);
+      rawCtx.fillStyle = "#39FF88";
+      rawCtx.beginPath();
+      rawCtx.arc(-62, 32, 36, 0, Math.PI * 2);
+      rawCtx.arc(62, 32, 36, 0, Math.PI * 2);
+      rawCtx.fill();
+      $("hvAssetNameInput").value = "Mega_Monster_Truck_4x4";
+    } else {
+      // Canyon Elevation Topo Map
+      for (let r = 120; r > 10; r -= 14) {
+        const hue = 160 + (120 - r) * 1.4;
+        const light = 25 + (120 - r) * 0.45;
+        rawCtx.fillStyle = `hsl(${hue}, 90%, ${light}%)`;
+        rawCtx.beginPath();
+        rawCtx.ellipse(0, 0, r * 1.15, r * 0.78, 0.2, 0, Math.PI * 2);
+        rawCtx.fill();
+      }
+      $("hvAssetNameInput").value = "Canyon_Terrain_Mesh";
+    }
+
+    rawCtx.restore();
+    decompileImageAndRebuild3D();
+    captureCurrentPoseToKeyframe(true);
+  }
+
+  // =========================================================================
+  // 3. IMAGE & VIDEO DECOMPILATION ENGINE (ALBEDO, DEPTH, SOBEL, NORMALS, 3D)
+  // =========================================================================
+  function decompileImageAndRebuild3D() {
+    const w = srcCanvas.width, h = srcCanvas.height;
+    const rawImg = rawCtx.getImageData(0, 0, w, h);
+    const rawData = rawImg.data;
+
+    const outAlbedo = srcCtx.createImageData(w, h);
+    const outDepth = srcCtx.createImageData(w, h);
+    const outEdges = srcCtx.createImageData(w, h);
+    const outNormals = srcCtx.createImageData(w, h);
+
+    const bgThresh = (Number($("hvBgThreshold").value) / 100) * 255;
+    const contrastPct = Number($("hvContrast").value) / 100;
+
+    // Sample corner pixel as background reference color for Chroma-Key isolation
+    const bgR = rawData[0], bgG = rawData[1], bgB = rawData[2];
+
+    const lumField = new Float32Array(w * h);
+    const maskField = new Uint8Array(w * h);
+
+    // Pass 1: Albedo Isolation & Luminance Field
+    for (let i = 0; i < w * h; i++) {
+      const idx = i * 4;
+      let r = Math.min(255, Math.max(0, (rawData[idx] - 128) * contrastPct + 128));
+      let g = Math.min(255, Math.max(0, (rawData[idx + 1] - 128) * contrastPct + 128));
+      let b = Math.min(255, Math.max(0, (rawData[idx + 2] - 128) * contrastPct + 128));
+      const a = rawData[idx + 3];
+
+      const distBg = Math.hypot(r - bgR, g - bgG, b - bgB);
+      const isFg = a > 30 && distBg > bgThresh;
+      maskField[i] = isFg ? 1 : 0;
+
+      const lum = isFg ? (0.299 * r + 0.587 * g + 0.114 * b) / 255 : 0;
+      const sculptedZ = Math.min(1, Math.max(0, lum + depthSculptDelta[i]));
+      lumField[i] = isFg ? sculptedZ : 0;
+
+      outAlbedo.data[idx] = r;
+      outAlbedo.data[idx + 1] = g;
+      outAlbedo.data[idx + 2] = b;
+      outAlbedo.data[idx + 3] = isFg ? 255 : 28;
+    }
+
+    // Pass 2: Sobel Edge Detection, Depth Relief & Surface Normals
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const i = y * w + x;
+        const idx = i * 4;
+        const gx =
+          -lumField[(y - 1) * w + (x - 1)] + lumField[(y - 1) * w + (x + 1)] +
+          -2 * lumField[y * w + (x - 1)] + 2 * lumField[y * w + (x + 1)] +
+          -lumField[(y + 1) * w + (x - 1)] + lumField[(y + 1) * w + (x + 1)];
+        const gy =
+          -lumField[(y - 1) * w + (x - 1)] - 2 * lumField[(y - 1) * w + x] - lumField[(y - 1) * w + (x + 1)] +
+          lumField[(y + 1) * w + (x - 1)] + 2 * lumField[(y + 1) * w + x] + lumField[(y + 1) * w + (x + 1)];
+
+        const edgeMag = Math.min(1, Math.hypot(gx, gy) * 1.8);
+        const depthByte = Math.round(lumField[i] * 255);
+
+        // Depth Layer (Cyan-Gold thermal height visualization)
+        outDepth.data[idx] = depthByte;
+        outDepth.data[idx + 1] = Math.round(depthByte * 0.85);
+        outDepth.data[idx + 2] = Math.min(255, depthByte + 40);
+        outDepth.data[idx + 3] = 255;
+
+        // Edge Layer
+        const eByte = Math.round(edgeMag * 255);
+        outEdges.data[idx] = 0;
+        outEdges.data[idx + 1] = eByte;
+        outEdges.data[idx + 2] = Math.round(eByte * 0.85);
+        outEdges.data[idx + 3] = 255;
+
+        // Normal Map Layer
+        const nx = -gx * 2.2, ny = -gy * 2.2, nz = 1.0;
+        const nLen = Math.hypot(nx, ny, nz) || 1;
+        outNormals.data[idx] = Math.round(((nx / nLen) * 0.5 + 0.5) * 255);
+        outNormals.data[idx + 1] = Math.round(((ny / nLen) * 0.5 + 0.5) * 255);
+        outNormals.data[idx + 2] = Math.round(((nz / nLen) * 0.5 + 0.5) * 255);
+        outNormals.data[idx + 3] = 255;
+      }
+    }
+
+    // Draw processed Albedo onto Source Editor Canvas & all 4 Decompiled Layer Canvases
+    srcCtx.putImageData(outAlbedo, 0, 0);
+
+    const drawScaledLayer = (targetCtx, imgData) => {
+      const tmp = document.createElement("canvas");
+      tmp.width = w; tmp.height = h;
+      tmp.getContext("2d").putImageData(imgData, 0, 0);
+      targetCtx.clearRect(0, 0, 280, 175);
+      targetCtx.drawImage(tmp, 0, 0, 280, 175);
+    };
+    drawScaledLayer(layerAlbedo, outAlbedo);
+    drawScaledLayer(layerDepth, outDepth);
+    drawScaledLayer(layerEdges, outEdges);
+    drawScaledLayer(layerNormals, outNormals);
+
+    // Pass 3: Reconstruct 3D Mesh & Voxel Cloud from Decompiled Layers
+    const gridN = Number($("hvGridRes").value) || 28;
+    const depthScale = (Number($("hvDepthScale").value) || 140) / 100;
+    meshVertices = [];
+    meshVoxels = [];
+    const colorCounts = {};
+
+    for (let gy = 0; gy < gridN; gy++) {
+      for (let gx = 0; gx < gridN; gx++) {
+        const px = Math.floor((gx / (gridN - 1)) * (w - 1));
+        const py = Math.floor((gy / (gridN - 1)) * (h - 1));
+        const i = py * w + px;
+        if (!maskField[i]) continue;
+
+        const r = outAlbedo.data[i * 4];
+        const g = outAlbedo.data[i * 4 + 1];
+        const b = outAlbedo.data[i * 4 + 2];
+        const zVal = lumField[i] * depthScale;
+
+        // Normalized 3D coordinates in [-1, 1]
+        const nx = (gx / (gridN - 1)) * 2 - 1;
+        const ny = -((gy / (gridN - 1)) * 2 - 1);
+        const nz = (zVal - 0.35) * 0.85;
+
+        const hex = "#" + [r, g, b].map(v => ("0" + Math.round(v).toString(16)).slice(-2)).join("").toUpperCase();
+        colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+
+        meshVoxels.push({ x: nx, y: ny, z: nz, h: Math.max(0.08, zVal * 0.45), r, g, b, hex, gx, gy });
+        meshVertices.push({ x: nx, y: ny, z: nz, r, g, b, hex, gx, gy });
+      }
+    }
+
+    // Update dominant palette swatches
+    const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(e => e[0]);
+    if (sortedColors.length > 0) extractedPalette = sortedColors;
+    renderPaletteSwatches();
+
+    statusBadge.textContent = `✅ DECOMPILED: ${meshVoxels.length} 3D VOXELS / VERTICES`;
+    refreshSerializedExportPreview();
+  }
+
+  function renderPaletteSwatches() {
+    const wrap = $("hvPaletteSwatches");
+    wrap.innerHTML = "";
+    extractedPalette.forEach(hex => {
+      const sw = document.createElement("div");
+      sw.className = "color-swatch";
+      sw.style.background = hex;
+      sw.title = "Use extracted color " + hex;
+      sw.addEventListener("click", () => {
+        $("hvBrushColor").value = hex;
+      });
+      wrap.appendChild(sw);
+    });
+  }
+
+  // =========================================================================
+  // 4. INTERACTIVE 2D BRUSH & DEPTH SCULPTING ON SOURCE CANVAS
+  // =========================================================================
+  let painting2d = false;
+  function applyBrushAtEvent(e) {
+    const rect = srcCanvas.getBoundingClientRect();
+    const x = Math.floor(((e.clientX - rect.left) / rect.width) * srcCanvas.width);
+    const y = Math.floor(((e.clientY - rect.top) / rect.height) * srcCanvas.height);
+    const rad = Number($("hvBrushSize").value) || 12;
+    const mode = $("hvBrushModeSelect").value;
+    const color = $("hvBrushColor").value;
+
+    if (mode === "paint" || mode === "erase") {
+      rawCtx.save();
+      rawCtx.beginPath();
+      rawCtx.arc(x, y, rad, 0, Math.PI * 2);
+      rawCtx.fillStyle = mode === "erase" ? "#060911" : color;
+      rawCtx.fill();
+      rawCtx.restore();
+    } else {
+      const delta = mode === "raise" ? 0.18 : -0.18;
+      const w = srcCanvas.width, h = srcCanvas.height;
+      for (let dy = -rad; dy <= rad; dy++) {
+        for (let dx = -rad; dx <= rad; dx++) {
+          if (dx * dx + dy * dy <= rad * rad) {
+            const px = x + dx, py = y + dy;
+            if (px >= 0 && px < w && py >= 0 && py < h) {
+              const idx = py * w + px;
+              depthSculptDelta[idx] = Math.max(-0.9, Math.min(0.9, depthSculptDelta[idx] + delta));
+            }
+          }
+        }
+      }
+    }
+    decompileImageAndRebuild3D();
+  }
+
+  srcCanvas.addEventListener("pointerdown", e => {
+    painting2d = true;
+    srcCanvas.setPointerCapture(e.pointerId);
+    applyBrushAtEvent(e);
+  });
+  srcCanvas.addEventListener("pointermove", e => {
+    if (painting2d) applyBrushAtEvent(e);
+  });
+  srcCanvas.addEventListener("pointerup", () => { painting2d = false; });
+
+  // =========================================================================
+  // 5. REAL-TIME 3D MODEL & ANIMATION RENDERER (VOXEL / RELIEF / LATHE / WIRE)
+  // =========================================================================
+  threeCanvas.addEventListener("pointerdown", e => {
+    isDragging3d = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+    threeCanvas.setPointerCapture(e.pointerId);
+  });
+  threeCanvas.addEventListener("pointermove", e => {
+    if (!isDragging3d) return;
+    camYaw += (e.clientX - lastMouseX) * 0.01;
+    camPitch = Math.max(-1.2, Math.min(1.2, camPitch + (e.clientY - lastMouseY) * 0.01));
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+  threeCanvas.addEventListener("pointerup", () => { isDragging3d = false; });
+
+  function project3D(x, y, z, yaw, pitch, scale, cx, cy) {
+    // Rotate around Y (yaw)
+    const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+    const x1 = x * cosY - z * sinY;
+    const z1 = x * sinY + z * cosY;
+    // Rotate around X (pitch)
+    const cosP = Math.cos(pitch), sinP = Math.sin(pitch);
+    const y2 = y * cosP - z1 * sinP;
+    const z2 = y * sinP + z1 * cosP;
+
+    const fov = 3.2;
+    const dist = fov + z2;
+    const persp = fov / Math.max(0.4, dist);
+    return {
+      sx: cx + x1 * scale * persp,
+      sy: cy - y2 * scale * persp,
+      depth: z2,
+      persp
+    };
+  }
+
+  let lastFrameTs = performance.now();
+  function render3DLoop(now) {
+    requestAnimationFrame(render3DLoop);
+    const dt = Math.min(0.05, (now - lastFrameTs) * 0.001);
+    lastFrameTs = now;
+
+    const speed = (Number($("hvAnimSpeed").value) || 100) / 100;
+    const clip = $("hvAnimClipSelect").value;
+    if (clip !== "static" && !isDragging3d) {
+      animTime += dt * speed * 2.2;
+    }
+
+    const w = threeCanvas.width, h = threeCanvas.height;
+    threeCtx.clearRect(0, 0, w, h);
+
+    // Draw 3D Stage Grid Floor
+    const cx = w * 0.5, cy = h * 0.54;
+    const baseScale = Math.min(w, h) * 0.36 * camZoom;
+
+    let effYaw = camYaw;
+    let effPitch = camPitch;
+    let yOffset = 0;
+    let explodeFactor = 0;
+
+    if (clip === "turntable") {
+      effYaw = camYaw + animTime * 0.8;
+    } else if (clip === "flight") {
+      effYaw = camYaw + Math.sin(animTime * 0.7) * 0.45;
+      effPitch = camPitch + Math.cos(animTime * 1.1) * 0.22;
+      yOffset = Math.sin(animTime * 1.8) * 0.12;
+    } else if (clip === "bounce") {
+      yOffset = Math.abs(Math.sin(animTime * 3.2)) * 0.22;
+      effYaw = camYaw + Math.sin(animTime * 0.8) * 0.25;
+    } else if (clip === "hover") {
+      yOffset = Math.sin(animTime * 1.5) * 0.14;
+    } else if (clip === "explode") {
+      explodeFactor = (Math.sin(animTime * 1.6) * 0.5 + 0.5) * 0.65;
+    }
+
+    // Draw reference floor ring
+    threeCtx.strokeStyle = "rgba(0, 245, 212, 0.22)";
+    threeCtx.lineWidth = 1;
+    threeCtx.beginPath();
+    for (let a = 0; a <= Math.PI * 2 + 0.1; a += 0.25) {
+      const p = project3D(Math.cos(a) * 1.25, -0.95, Math.sin(a) * 1.25, effYaw, effPitch, baseScale, cx, cy);
+      if (a === 0) threeCtx.moveTo(p.sx, p.sy);
+      else threeCtx.lineTo(p.sx, p.sy);
+    }
+    threeCtx.stroke();
+
+    const mode3d = $("hv3dModeSelect").value;
+    const gridN = Number($("hvGridRes").value) || 28;
+    const voxSize = (2.1 / gridN) * baseScale * 0.78;
+
+    // Sort voxels back-to-front by projected depth (Painter's Algorithm)
+    const projectedList = [];
+    for (let i = 0; i < meshVoxels.length; i++) {
+      const v = meshVoxels[i];
+      let vx = v.x * (1 + explodeFactor);
+      let vy = v.y * (1 + explodeFactor) + yOffset;
+      let vz = v.z * (1 + explodeFactor * 1.8);
+
+      if (mode3d === "lathe") {
+        const angle = v.x * Math.PI;
+        const radius = Math.max(0.08, Math.abs(v.x) * 0.85);
+        vx = Math.cos(angle) * radius;
+        vz = Math.sin(angle) * radius;
+      }
+
+      const pFront = project3D(vx, vy, vz, effYaw, effPitch, baseScale, cx, cy);
+      const pBack = project3D(vx, vy, -vz * 0.65, effYaw, effPitch, baseScale, cx, cy);
+      projectedList.push({ v, pFront, pBack });
+    }
+
+    projectedList.sort((a, b) => b.pFront.depth - a.pFront.depth);
+
+    for (let i = 0; i < projectedList.length; i++) {
+      const { v, pFront, pBack } = projectedList[i];
+      const sz = Math.max(2.5, voxSize * pFront.persp);
+
+      if (mode3d === "wireframe") {
+        threeCtx.strokeStyle = v.hex;
+        threeCtx.lineWidth = 1.1;
+        threeCtx.strokeRect(pFront.sx - sz * 0.5, pFront.sy - sz * 0.5, sz, sz);
+      } else if (mode3d === "relief") {
+        threeCtx.fillStyle = v.hex;
+        threeCtx.beginPath();
+        threeCtx.arc(pFront.sx, pFront.sy, sz * 0.62, 0, Math.PI * 2);
+        threeCtx.fill();
+      } else {
+        // 3D Voxel / Lathe Extrusion with Side Shaded Pillar + Lit Cap
+        const shadeR = Math.max(0, v.r - 45);
+        const shadeG = Math.max(0, v.g - 45);
+        const shadeB = Math.max(0, v.b - 45);
+        threeCtx.strokeStyle = `rgb(${shadeR},${shadeG},${shadeB})`;
+        threeCtx.lineWidth = sz;
+        threeCtx.lineCap = "round";
+        threeCtx.beginPath();
+        threeCtx.moveTo(pBack.sx, pBack.sy);
+        threeCtx.lineTo(pFront.sx, pFront.sy);
+        threeCtx.stroke();
+
+        threeCtx.fillStyle = v.hex;
+        threeCtx.fillRect(pFront.sx - sz * 0.5, pFront.sy - sz * 0.5, sz, sz);
+      }
+    }
+
+    // HUD Telemetry Overlay on 3D Canvas
+    threeCtx.fillStyle = "#D4AF37";
+    threeCtx.font = "bold 11px monospace";
+    threeCtx.fillText(`3D MODE: ${mode3d.toUpperCase()} • CLIP: ${clip.toUpperCase()} • VOXELS: ${meshVoxels.length}`, 12, 20);
+  }
+
+  // =========================================================================
+  // 6. PHONE CAMERA, NATIVE PHOTO APP, WEBRTC STREAM & LINK/HTML IMPORTER
+  // =========================================================================
+  function loadImageElementIntoDecompiler(imgEl, label) {
+    const w = rawBuffer.width, h = rawBuffer.height;
+    rawCtx.fillStyle = "#060911";
+    rawCtx.fillRect(0, 0, w, h);
+    const scale = Math.min(w / Math.max(1, imgEl.width), h / Math.max(1, imgEl.height));
+    const dw = imgEl.width * scale, dh = imgEl.height * scale;
+    rawCtx.drawImage(imgEl, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    depthSculptDelta.fill(0);
+    decompileImageAndRebuild3D();
+    captureCurrentPoseToKeyframe(true);
+    statusBadge.textContent = "📸 DECOMPILED TO 3D: " + label.slice(0, 26).toUpperCase();
+  }
+
+  function handleUploadedMediaFile(file) {
+    if (!file) return;
+    $("hvAssetNameInput").value = file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+    if (file.type.startsWith("video/")) {
+      const url = URL.createObjectURL(file);
+      videoEl.src = url;
+      videoEl.muted = true;
+      videoEl.play().then(() => {
+        setTimeout(() => {
+          loadImageElementIntoDecompiler(videoEl, file.name);
+        }, 250);
+      }).catch(() => {});
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => loadImageElementIntoDecompiler(img, file.name);
+      img.src = String(reader.result || "");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Phone Camera Rear Trigger (capture="environment")
+  $("btnPhoneCameraRear").addEventListener("click", () => $("inputPhoneCameraRear").click());
+  $("inputPhoneCameraRear").addEventListener("change", e => handleUploadedMediaFile(e.target.files && e.target.files[0]));
+
+  // Native Photo App / Gallery Trigger
+  $("btnNativePhotoApp").addEventListener("click", () => $("inputNativePhotoApp").click());
+  $("inputNativePhotoApp").addEventListener("change", e => handleUploadedMediaFile(e.target.files && e.target.files[0]));
+
+  // Video File Upload in Tab 3
+  $("btnUploadVideoFile").addEventListener("click", () => $("inputVideoFile").click());
+  $("inputVideoFile").addEventListener("change", e => handleUploadedMediaFile(e.target.files && e.target.files[0]));
+
+  // Live WebRTC Camera Viewfinder
+  $("btnLiveWebRtcCam").addEventListener("click", async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        $("inputPhoneCameraRear").click();
+        return;
+      }
+      activeWebRtcStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+      videoEl.srcObject = activeWebRtcStream;
+      videoEl.hidden = false;
+      srcCanvas.style.display = "none";
+      $("hvWebRtcControls").style.display = "flex";
+      statusBadge.textContent = "📹 LIVE CAMERA VIEWFINDER ACTIVE";
+    } catch (err) {
+      // Fallback to native phone camera input if browser blocks WebRTC inside iframe
+      $("inputPhoneCameraRear").click();
+    }
+  });
+
+  $("btnSnapWebRtcFrame").addEventListener("click", () => {
+    loadImageElementIntoDecompiler(videoEl, "Camera_Snapshot");
+    $("btnStopWebRtcCam").click();
+  });
+
+  $("btnStopWebRtcCam").addEventListener("click", () => {
+    if (activeWebRtcStream) {
+      activeWebRtcStream.getTracks().forEach(t => t.stop());
+      activeWebRtcStream = null;
+    }
+    videoEl.hidden = true;
+    srcCanvas.style.display = "block";
+    $("hvWebRtcControls").style.display = "none";
+  });
+
+  // Image, Video, or HTML Link Decompiler
+  $("btnLoadLinkOrHtml").addEventListener("click", () => {
+    const raw = ($("hvLinkOrHtmlInput").value || "").trim();
+    if (!raw) return;
+
+    // Extract src="..." if user pasted an HTML snippet like <img src="...">
+    const srcMatch = raw.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+    const targetUrl = srcMatch ? srcMatch[1] : raw;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => loadImageElementIntoDecompiler(img, "Linked_Media");
+    img.onerror = () => {
+      // If external link blocks cross-origin pixel access, synthesize a custom 3D emblem for that URL/HTML
+      const w = rawBuffer.width, h = rawBuffer.height;
+      rawCtx.fillStyle = "#060911";
+      rawCtx.fillRect(0, 0, w, h);
+      rawCtx.fillStyle = "#00F5D4";
+      rawCtx.fillRect(45, 45, 230, 130);
+      rawCtx.fillStyle = "#D4AF37";
+      rawCtx.font = "bold 22px sans-serif";
+      rawCtx.textAlign = "center";
+      rawCtx.fillText(targetUrl.replace(/^https?:\/\//i, "").slice(0, 18).toUpperCase(), w / 2, h / 2 + 8);
+      decompileImageAndRebuild3D();
+      statusBadge.textContent = "🔗 GENERATED 3D EMBLEM FROM LINK/HTML";
+    };
+    img.src = targetUrl;
+  });
+
+  // =========================================================================
+  // 7. VIDEO FRAME & 4-KEYFRAME MOTION SEQUENCER (TAB 3)
+  // =========================================================================
+  function captureCurrentPoseToKeyframe(resetAll) {
+    if (resetAll) keyframes = [];
+    const snapCanvas = document.createElement("canvas");
+    snapCanvas.width = 160;
+    snapCanvas.height = 100;
+    snapCanvas.getContext("2d").drawImage(srcCanvas, 0, 0, 160, 100);
+
+    if (resetAll) {
+      for (let k = 0; k < 4; k++) {
+        keyframes.push({
+          idx: k + 1,
+          label: `Keyframe #${k + 1} (${k * 90}° Pose)`,
+          yaw: camYaw + k * 0.45,
+          pitch: camPitch + (k % 2 === 0 ? 0.12 : -0.12),
+          thumbUrl: snapCanvas.toDataURL("image/png")
+        });
+      }
+    } else {
+      keyframes.push({
+        idx: keyframes.length + 1,
+        label: `Keyframe #${keyframes.length + 1} (Custom Pose)`,
+        yaw: camYaw,
+        pitch: camPitch,
+        thumbUrl: snapCanvas.toDataURL("image/png")
+      });
+    }
+    renderKeyframeSlots();
+  }
+
+  function renderKeyframeSlots() {
+    const grid = $("hvKeyframeSlotsGrid");
+    grid.innerHTML = "";
+    keyframes.slice(0, 4).forEach((kf, i) => {
+      const card = document.createElement("div");
+      card.className = "hv-card";
+      card.style.minHeight = "160px";
+      card.innerHTML = `
+        <div class="hv-card-head"><span>🎞️ ${kf.label}</span></div>
+        <div class="hv-card-body" style="align-items:center">
+          <img src="${kf.thumbUrl}" alt="${kf.label}" style="width:100%;height:95px;object-fit:contain;background:#05070C;border-radius:6px;border:1px solid var(--line)">
+          <small style="color:var(--accent2);font-family:var(--mono)">Yaw: ${kf.yaw.toFixed(2)} rad • Pitch: ${kf.pitch.toFixed(2)} rad</small>
+        </div>
+      `;
+      card.addEventListener("click", () => {
+        camYaw = kf.yaw;
+        camPitch = kf.pitch;
+        switchView("studio");
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  $("btnCaptureKeyframeSlot").addEventListener("click", () => captureCurrentPoseToKeyframe(false));
+
+  $("hvVideoScrubber").addEventListener("input", e => {
+    const pct = Number(e.target.value);
+    const frameIdx = Math.min(4, Math.floor(pct / 25) + 1);
+    $("lblTimelinePct").textContent = `Frame ${frameIdx} / 4 (${pct}%)`;
+    camYaw = 0.55 + (pct / 100) * Math.PI * 2;
+    if (videoEl.src && videoEl.duration) {
+      videoEl.currentTime = (pct / 100) * videoEl.duration;
+    }
+  });
+
+  // =========================================================================
+  // 8. NATIVE HAWKSUITE EXPORTER (.HAWK3D.JSON, .HTML, .OBJ, .JS + BUS SYNC)
+  // =========================================================================
+  const BUS_KEY = "hawk_creator_ecosystem_v1";
+  let suiteBus = null;
+  try {
+    if (typeof BroadcastChannel === "function") {
+      suiteBus = new BroadcastChannel(BUS_KEY);
+    }
+  } catch (e) {}
+
+  function buildNativeHawkSuiteJsonPackage() {
+    const assetName = ($("hvAssetNameInput").value || "HawkVision_Asset").trim();
+    return {
+      format: "HAWK3D_NATIVE_ASSET_V1",
+      generator: "HawkVision (vision.forefronthawk.com)",
+      compatibleTools: ["HawkAccipiter", "HawkEyas", "HawkTails", "HawkTalon", "HawkX"],
+      name: assetName,
+      createdAt: new Date().toISOString(),
+      mode3D: $("hv3dModeSelect").value,
+      animationClip: $("hvAnimClipSelect").value,
+      depthScale: Number($("hvDepthScale").value) / 100,
+      gridResolution: Number($("hvGridRes").value),
+      palette: extractedPalette,
+      vertexCount: meshVoxels.length,
+      voxels: meshVoxels.slice(0, 450).map(v => ({
+        x: Number(v.x.toFixed(3)),
+        y: Number(v.y.toFixed(3)),
+        z: Number(v.z.toFixed(3)),
+        h: Number(v.h.toFixed(3)),
+        color: v.hex
+      })),
+      keyframes: keyframes.map(k => ({ idx: k.idx, label: k.label, yaw: k.yaw, pitch: k.pitch }))
+    };
+  }
+
+  function buildWavefrontObjString() {
+    const assetName = ($("hvAssetNameInput").value || "HawkVision_Asset").trim();
+    const lines = [
+      `# Wavefront OBJ generated by HawkVision (vision.forefronthawk.com)`,
+      `# Asset: ${assetName} (${meshVertices.length} vertices)`,
+      `o ${assetName}`
+    ];
+    meshVertices.forEach(v => {
+      lines.push(`v ${v.x.toFixed(4)} ${v.y.toFixed(4)} ${v.z.toFixed(4)} ${(v.r/255).toFixed(3)} ${(v.g/255).toFixed(3)} ${(v.b/255).toFixed(3)}`);
+    });
+    return lines.join("\n");
+  }
+
+  function buildStandaloneHtmlExport() {
+    const pkg = buildNativeHawkSuiteJsonPackage();
+    return [
+      '<!DOCTYPE html>',
+      '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
+      '<title>' + pkg.name + ' — HawkVision 3D Model &amp; Animation</title>',
+      '<style>body{margin:0;background:#07090F;color:#F8FAFC;font-family:system-ui,sans-serif;display:flex;flex-direction:column;height:100vh;align-items:center;justify-content:center}canvas{border:2px solid #D4AF37;border-radius:14px;background:#05070C;max-width:95vw}</style></head><body>',
+      '<h2 style="color:#D4AF37;margin-bottom:8px">🦅 ' + pkg.name + ' (HawkVision 3D Asset)</h2>',
+      '<canvas id="c" width="680" height="420"></canvas>',
+      '<footer style="margin-top:10px;font:700 12px monospace;color:#00F5D4">⚡ Powered by vision.forefronthawk.com &amp; talon.Forefronthawk</footer>',
+      S_OPEN,
+      'const PKG = ' + JSON.stringify(pkg) + ';',
+      'const c = document.getElementById("c"), ctx = c.getContext("2d"); let t = 0;',
+      'function loop(){ requestAnimationFrame(loop); t += 0.025; ctx.fillStyle="#05070C"; ctx.fillRect(0,0,c.width,c.height);',
+      'PKG.voxels.forEach(v => { const cy = Math.cos(t), sy = Math.sin(t), x = v.x*cy - v.z*sy, z = v.x*sy + v.z*cy + 3.2;',
+      'const s = 260 / Math.max(0.5, z); ctx.fillStyle = v.color; ctx.fillRect(340 + x*s - 5, 210 - v.y*s - 5, 10, 10); }); }',
+      'requestAnimationFrame(loop);',
+      S_CLOSE,
+      '</body></html>'
+    ].join("\n");
+  }
+
+  function buildJsModuleExport() {
+    const pkg = buildNativeHawkSuiteJsonPackage();
+    return [
+      `// HawkVision Native 3D Asset Module (${pkg.name}) — vision.forefronthawk.com`,
+      `export const HAWK_ASSET_${pkg.name.toUpperCase().replace(/[^A-Z0-9_]/g, "_")} = ${JSON.stringify(pkg, null, 2)};`
+    ].join("\n");
+  }
+
+  function refreshSerializedExportPreview() {
+    const fmt = $("hvExportFormatSelect").value;
+    let out = "";
+    if (fmt === "hawksuite_json") out = JSON.stringify(buildNativeHawkSuiteJsonPackage(), null, 2);
+    else if (fmt === "standalone_html") out = buildStandaloneHtmlExport();
+    else if (fmt === "wavefront_obj") out = buildWavefrontObjString();
+    else out = buildJsModuleExport();
+
+    $("hvExportCodeTextarea").value = out;
+    $("lblExportByteSize").textContent = (out.length / 1024).toFixed(1) + " KB";
+  }
+
+  function broadcastAssetToHawkSuiteBus() {
+    try {
+      const pkg = buildNativeHawkSuiteJsonPackage();
+      const existing = JSON.parse(localStorage.getItem(BUS_KEY) || "{}") || {};
+      existing.lastAsset = {
+        name: pkg.name,
+        sourceApp: "HawkVision",
+        updatedAt: pkg.createdAt,
+        mode3D: pkg.mode3D,
+        animationClip: pkg.animationClip,
+        palette: pkg.palette,
+        voxelCount: pkg.vertexCount,
+        hawk3dPackage: pkg
+      };
+      localStorage.setItem(BUS_KEY, JSON.stringify(existing));
+      if (suiteBus) {
+        suiteBus.postMessage({
+          app: "HawkVision",
+          type: "HAWKVISION_3D_ASSET_EXPORTED",
+          assetName: pkg.name,
+          voxelCount: pkg.vertexCount
+        });
+      }
+      statusBadge.textContent = "📡 SYNCED 3D ASSET TO HAWKSUITE BUS!";
+      $("hvExportBusStatus").innerHTML = `✅ <b>Synced "${pkg.name}" (${pkg.vertexCount} voxels, ${pkg.animationClip} animation)</b> to <code>hawk_creator_ecosystem_v1</code>! Open <b>HawkAccipiter</b>, <b>HawkEyas</b>, or <b>HawkTalon</b> to use it immediately.`;
+    } catch (e) {}
+  }
+
+  // =========================================================================
+  // 9. UI EVENT WIRING
+  // =========================================================================
+  function switchView(viewId) {
+    document.querySelectorAll(".hv-tab").forEach(btn => {
+      btn.setAttribute("aria-selected", btn.getAttribute("data-view") === viewId ? "true" : "false");
+    });
+    document.querySelectorAll(".hv-view").forEach(v => {
+      v.classList.toggle("active", v.id === "view-" + viewId);
+    });
+    if (viewId === "export") refreshSerializedExportPreview();
+  }
+
+  document.querySelectorAll(".hv-tab").forEach(btn => {
+    btn.addEventListener("click", () => switchView(btn.getAttribute("data-view")));
+  });
+
+  $("hvPresetSelect").addEventListener("change", e => drawPresetSubjectToRawBuffer(e.target.value));
+  $("btnClearPaintEdits").addEventListener("click", () => drawPresetSubjectToRawBuffer($("hvPresetSelect").value));
+
+  $("btnAutoRemoveBg").addEventListener("click", () => {
+    $("hvBgThreshold").value = 28;
+    $("lblBgThreshold").textContent = "28%";
+    decompileImageAndRebuild3D();
+  });
+
+  $("hvBrushModeSelect").addEventListener("change", e => {
+    $("lblBrushMode").textContent = e.target.options[e.target.selectedIndex].text.replace(/^[^\s]+\s/, "");
+  });
+  $("hvBrushSize").addEventListener("input", e => {
+    $("lblBrushSize").textContent = e.target.value + "px";
+  });
+  $("hvBgThreshold").addEventListener("input", e => {
+    $("lblBgThreshold").textContent = e.target.value + "%";
+    decompileImageAndRebuild3D();
+  });
+  $("hvContrast").addEventListener("input", e => {
+    $("lblContrast").textContent = e.target.value + "%";
+    decompileImageAndRebuild3D();
+  });
+  $("hvDepthScale").addEventListener("input", e => {
+    $("lblDepthScale").textContent = (Number(e.target.value) / 100).toFixed(1) + "×";
+    decompileImageAndRebuild3D();
+  });
+  $("hvGridRes").addEventListener("input", e => {
+    $("lblGridRes").textContent = e.target.value + "×" + e.target.value;
+    decompileImageAndRebuild3D();
+  });
+  $("hvAnimClipSelect").addEventListener("change", e => {
+    $("lblAnimClip").textContent = e.target.options[e.target.selectedIndex].text.split(" ")[1] || e.target.value;
+  });
+  $("hvAnimSpeed").addEventListener("input", e => {
+    $("lblAnimSpeed").textContent = (Number(e.target.value) / 100).toFixed(1) + "×";
+  });
+  $("btnResetCamera3d").addEventListener("click", () => {
+    camYaw = 0.55;
+    camPitch = 0.38;
+    camZoom = 1.05;
+  });
+
+  $("hvExportFormatSelect").addEventListener("change", refreshSerializedExportPreview);
+  $("hvAssetNameInput").addEventListener("input", refreshSerializedExportPreview);
+  $("btnRefreshExportPreview").addEventListener("click", refreshSerializedExportPreview);
+
+  $("btnSendToHawkSuite").addEventListener("click", () => {
+    broadcastAssetToHawkSuiteBus();
+    switchView("export");
+  });
+  $("btnBroadcastToSuiteNow").addEventListener("click", broadcastAssetToHawkSuiteBus);
+
+  function downloadFile(content, filename, mime) {
+    const blob = new Blob([content], { type: mime || "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  $("btnQuickExportHawk3d").addEventListener("click", () => {
+    const pkg = buildNativeHawkSuiteJsonPackage();
+    broadcastAssetToHawkSuiteBus();
+    downloadFile(JSON.stringify(pkg, null, 2), `${pkg.name}.hawk3d.json`, "application/json;charset=utf-8");
+  });
+
+  $("btnDownloadExportFile").addEventListener("click", () => {
+    refreshSerializedExportPreview();
+    const fmt = $("hvExportFormatSelect").value;
+    const name = ($("hvAssetNameInput").value || "HawkVision_Asset").trim();
+    const ext = fmt === "hawksuite_json" ? ".hawk3d.json" : fmt === "standalone_html" ? ".html" : fmt === "wavefront_obj" ? ".obj" : ".js";
+    downloadFile($("hvExportCodeTextarea").value, name + ext, "text/plain;charset=utf-8");
+  });
+
+  $("btnCopyExportCode").addEventListener("click", () => {
+    refreshSerializedExportPreview();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText($("hvExportCodeTextarea").value).catch(() => {});
+    }
+    statusBadge.textContent = "📋 COPIED 3D ASSET CODE TO CLIPBOARD";
+  });
+
+  // Theme & Device Layout Switchers
+  const THEMES = {
+    "ui-sophisticated": { bg: "#07090F", panel: "#111624", panel2: "#171E31", border: "#C5A059", accent: "#D4AF37", accent2: "#00F5D4", text: "#F8FAFC", mute: "#94A3B8" },
+    "cyberpunk":        { bg: "#0D0221", panel: "#19053B", panel2: "#240046", border: "#FF007F", accent: "#00F0FF", accent2: "#FF007F", text: "#F0ABFC", mute: "#C084FC" },
+    "matrix":           { bg: "#010902", panel: "#031606", panel2: "#042409", border: "#00FF41", accent: "#00FF41", accent2: "#22C55E", text: "#00FF41", mute: "#22C55E" },
+    "hawk-cyan":        { bg: "#040C16", panel: "#07131F", panel2: "#0D1E30", border: "#00F5D4", accent: "#00F5D4", accent2: "#38BDF8", text: "#F1F5F9", mute: "#64748B" },
+    "daylight":         { bg: "#E8EBF0", panel: "#F8FAFC", panel2: "#E2E8F0", border: "#64748B", accent: "#0284C7", accent2: "#0D9488", text: "#0F172A", mute: "#475569" }
+  };
+
+  $("hvThemeSelect").addEventListener("change", e => {
+    const th = THEMES[e.target.value] || THEMES["ui-sophisticated"];
+    const r = document.documentElement;
+    r.style.setProperty("--bg", th.bg);
+    r.style.setProperty("--panel", th.panel);
+    r.style.setProperty("--panel2", th.panel2);
+    r.style.setProperty("--border", th.border);
+    r.style.setProperty("--accent", th.accent);
+    r.style.setProperty("--accent2", th.accent2);
+    r.style.setProperty("--text", th.text);
+    r.style.setProperty("--mute", th.mute);
+  });
+
+  $("hvDeviceSelect").addEventListener("change", e => {
+    document.documentElement.setAttribute("data-device", e.target.value);
+  });
+
+  // Initial Boot
+  drawPresetSubjectToRawBuffer("mecha_hawk");
+  requestAnimationFrame(render3DLoop);
+})();
+</script>
+</body>
+</html>
